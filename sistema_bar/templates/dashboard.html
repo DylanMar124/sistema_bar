@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="text-xl font-headline font-semibold mb-4">Bienvenido {{ current_user.nombre }}</h1>
+{% if current_user.is_authenticated and current_user.rol == 'admin' %}
+
+<!-- Summary Bento Grid (4 Columns) -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<!-- Mesas (Occupied status) -->
+<div class="bg-primary-fixed p-6 rounded-xl flex flex-col justify-between group hover:shadow-lg transition-all duration-300">
+    <div class="flex justify-between items-start">
+        <div class="w-12 h-12 rounded-full bg-white/40 flex items-center justify-center text-on-primary-fixed">
+            <span class="material-symbols-outlined text-2xl" data-icon="restaurant" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+        </div>
+    </div>
+    <div class="mt-6">
+        <h3 class="text-4xl font-extrabold text-on-primary-fixed tracking-tighter">{{ mesas_ocupadas }}</h3>
+        <p class="text-on-primary-fixed-variant text-sm font-medium mt-1">Mesas Ocupadas</p>
+    </div>
+</div>
+<!-- Ventas Hoy (Success green/Emerald) -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between hover:translate-y-[-4px] transition-all">
+    <div class="flex justify-between items-start">
+        <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-800">
+            <span class="material-symbols-outlined text-2xl" data-icon="payments" style="font-variation-settings: 'FILL' 1;">payments</span>
+        </div>
+        <span class="text-xs font-bold text-emerald-600 flex items-center gap-1">
+    </div>
+    <div class="mt-6">
+        <h3 class="text-3xl font-extrabold text-on-surface tracking-tighter">${{ "%.2f"|format(ventas_hoy) }}</h3>
+        <a href="{{ url_for('ordenes.lista_ordenes') }}" class="text-on-surface-variant text-sm font-medium mt-1">Ventas Hoy</a>
+    </div>
+</div>
+<!-- Stock Bajo (Warning yellow/Secondary) -->
+<div class="bg-secondary-fixed p-6 rounded-xl flex flex-col justify-between group hover:shadow-lg transition-all duration-300">
+    <div class="flex justify-between items-start">
+        <div class="w-12 h-12 rounded-full bg-white/40 flex items-center justify-center text-on-secondary-fixed">
+            <span class="material-symbols-outlined text-2xl" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+        </div>
+    </div>
+    <div class="mt-6">
+        <h3 class="text-4xl font-extrabold text-on-secondary-fixed tracking-tighter">{{ stock_bajo }}</h3>
+        <p class="text-on-secondary-fixed-variant text-sm font-medium mt-1">Stock Bajo Inventario</p>
+    </div>
+</div>
+<!-- Productos Activos (Info blue/Tertiary) -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between hover:translate-y-[-4px] transition-all">
+    <div class="flex justify-between items-start">
+        <div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl" data-icon="menu_book" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+        </div>
+    </div>
+    <div class="mt-6">
+        <h3 class="text-3xl font-extrabold text-on-surface tracking-tighter">{{ productos_activos }}</h3>
+        <p class="text-on-surface-variant text-sm font-medium mt-1">Productos Activos</p>
+    </div>
+</div>
+</section>
+
+<div class="grid grid-cols-1 gap-4 mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Ventas últimos 7 días</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="ventasChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sección: Ventas por mesa -->
+<div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Gráfico de barras -->
+    <div class="bg-white rounded-lg shadow p-4">
+        <h2 class="text-xl font-headline font-semibold mb-4">Ventas del día por mesa</h2>
+        <canvas id="ventasPorMesaChart" height="200"></canvas>
+    </div>
+
+    <!-- Tabla resumen -->
+    <div class="bg-white rounded-lg shadow p-4">
+        <h2 class="text-xl font-headline font-semibold mb-4">Resumen por mesa</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mesa</th>
+                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Total vendido</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for mesa in ventas_por_mesa %}
+                    <tr>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Mesa {{ mesa.numero }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                            ${{ "%.2f"|format(mesa.total) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Últimas órdenes pagadas -->
+<div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-headline font-semibold mb-4">Últimas órdenes pagadas</h2>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orden #</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mesa</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mesero</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hora</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for orden in ultimas_ordenes %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ orden.id }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ orden.mesa.numero }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ orden.mesero.nombre }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ "%.2f"|format(orden.total) }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ orden.fecha_hora.strftime('%H:%M') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No hay órdenes pagadas hoy</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const ctx = document.getElementById('ventasChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ fechas|tojson }},
+            datasets: [{
+                label: 'Ventas ($)',
+                data: {{ ventas_diarias|tojson }},
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+</script>
+
+<script>
+    const ctxVentasMesa = document.getElementById('ventasPorMesaChart').getContext('2d');
+    const mesas = [{% for mesa in ventas_por_mesa %}'Mesa {{ mesa.numero }}'{% if not loop.last %}, {% endif %}{% endfor %}];
+    const totales = [{% for mesa in ventas_por_mesa %}{{ mesa.total }}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+    new Chart(ctxVentasMesa, {
+        type: 'bar',
+        data: {
+            labels: mesas,
+            datasets: [{
+                label: 'Total vendido ($)',
+                data: totales,
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(2);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

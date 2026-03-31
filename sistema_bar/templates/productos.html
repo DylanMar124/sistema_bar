@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="font-headline font-bold text-2xl mb-4">Gestión de Productos</h1>
+
+<!-- Botón para crear nuevo producto (abre modal) -->
+<button type="button" onclick="openModal('crearProductoModal')" 
+    class="bg-neutral-500 hover:bg-neutral-700 text-white font-bold py-2 px-4 rounded inline-flex items-center mb-4">
+    <span class="material-symbols-outlined text-sm mr-2">add</span> Nuevo Producto
+</button>
+
+<!-- Modal para crear producto -->
+<div id="crearProductoModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-headline font-semibold">Crear Producto</h3>
+            <button type="button" onclick="closeModal('crearProductoModal')" class="text-gray-400 hover:text-gray-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form action="{{ url_for('productos.crear_producto') }}" method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                    <input type="text" id="nombre" name="nombre" required 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="precio" class="block text-sm font-medium text-gray-700">Precio</label>
+                    <input type="number" step="0.01" id="precio" name="precio" required 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="categoria_id" class="block text-sm font-medium text-gray-700">Categoría</label>
+                    <select id="categoria_id" name="categoria_id" required 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <option value="">Seleccione...</option>
+                        {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" onclick="closeModal('crearProductoModal')" 
+                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de productos -->
+<div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200" id="tablaProductos">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for producto in productos %}
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ producto.id }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ producto.nombre }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ producto.precio }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ producto.categoria.nombre }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    {% if producto.activo %}
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
+                    {% else %}
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactivo</span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <!-- Botón editar -->
+                    <button type="button" onclick="editarProducto({{ producto.id }}, '{{ producto.nombre }}', {{ producto.precio }}, {{ producto.categoria_id }}, {{ producto.activo|lower }})" 
+                        class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-3 rounded inline-flex items-center mr-2">
+                        <span class="material-symbols-outlined text-sm mr-1">edit</span> Modificar
+                    </button>
+                    <!-- Botón activar/desactivar -->
+                    <a href="{{ url_for('productos.toggle_producto', producto_id=producto.id) }}" 
+                       class="{% if producto.activo %}bg-red-500 hover:bg-red-700{% else %}bg-green-500 hover:bg-green-700{% endif %} text-white font-bold py-1 px-3 rounded inline-flex items-center"
+                       onclick="return confirm('¿Cambiar estado?')">
+                        <span class="material-symbols-outlined text-sm mr-1">{% if producto.activo %}cancel{% else %}check_circle{% endif %}</span>
+                        {% if producto.activo %}Desactivar{% else %}Activar{% endif %}
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal para editar producto -->
+<div id="editarProductoModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-headline font-semibold">Editar Producto</h3>
+            <button type="button" onclick="closeModal('editarProductoModal')" class="text-gray-400 hover:text-gray-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form action="{{ url_for('productos.editar_producto') }}" method="POST">
+            <input type="hidden" name="id" id="edit-id">
+            <div class="space-y-4">
+                <div>
+                    <label for="edit-nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                    <input type="text" id="edit-nombre" name="nombre" required 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="edit-precio" class="block text-sm font-medium text-gray-700">Precio</label>
+                    <input type="number" step="0.01" id="edit-precio" name="precio" required 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="edit-categoria_id" class="block text-sm font-medium text-gray-700">Categoría</label>
+                    <select id="edit-categoria_id" name="categoria_id" required 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <option value="">Seleccione...</option>
+                        {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="edit-activo" name="activo" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="edit-activo" class="ml-2 block text-sm text-gray-900">Activo</label>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" onclick="closeModal('editarProductoModal')" 
+                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Guardar cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+    if (document.getElementById("tablaProductos") && typeof simpleDatatables.DataTable !== 'undefined') {
+    const dataTable = new simpleDatatables.DataTable("#tablaProductos");
+    }
+
+    // Funciones para modales
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+    }
+
+    // Función para llenar modal de edición
+    function editarProducto(id, nombre, precio, categoriaId, activo) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-nombre').value = nombre;
+        document.getElementById('edit-precio').value = precio;
+        document.getElementById('edit-categoria_id').value = categoriaId;
+        document.getElementById('edit-activo').checked = activo;
+        openModal('editarProductoModal');
+    }
+
+    // Cerrar modal al hacer clic fuera del contenido
+    window.onclick = function(event) {
+        if (event.target.classList.contains('fixed')) {
+            closeModal('crearProductoModal');
+            closeModal('editarProductoModal');
+        }
+    }
+</script>
+{% endblock %}

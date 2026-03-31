@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cierre de Caja</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+        }
+        h1, .fecha {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .total {
+            margin-top: 20px;
+            text-align: right;
+            font-weight: bold;
+        }
+        .print-button {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cierre de Caja</h1>
+    <div class="fecha">Fecha: {{ fecha.strftime('%d/%m/%Y') }}</div>
+
+    <div class="total">
+        <p>Total ventas: ${{ "%.2f"|format(total) }} | Órdenes: {{ cantidad }}</p>
+    </div>
+
+    <h2>Resumen por método de pago</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Método</th>
+                <th class="text-right">Cantidad</th>
+                <th class="text-right">Monto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for metodo, count, monto in pagos %}
+            <tr>
+                <td>{{ metodo|capitalize }}</td>
+                <td class="text-right">{{ count }}</td>
+                <td class="text-right">${{ "%.2f"|format(monto) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Órdenes del día</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Mesa</th>
+                <th>Mesero</th>
+                <th class="text-right">Total</th>
+                <th>Método</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for orden in ordenes %}
+            <tr>
+                <td>{{ orden.id }}</td>
+                <td>{{ orden.mesa.numero }}</td>
+                <td>{{ orden.mesero.nombre }}</td>
+                <td class="text-right">${{ "%.2f"|format(orden.total) }}</td>
+                <td>{% for pago in orden.pagos %}{{ pago.metodo_pago|capitalize }}{% endfor %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        window.onload = function() {
+            window.print();
+        };
+    </script>
+</body>
+</html>

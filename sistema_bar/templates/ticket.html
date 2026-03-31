@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
+    <div id="ticket-content">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold">Ticket de Compra</h1>
+            <p class="text-sm text-gray-600">Ticket #{{ orden.id }}</p>
+            <p class="text-sm text-gray-600">{{ orden.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</p>
+            <p class="text-sm text-gray-600">Mesa {{ orden.mesa.numero }} | Mesero: {{ orden.mesero.nombre }}</p>
+        </div>
+
+        <table class="w-full mb-4">
+            <thead class="border-b border-gray-300">
+                <tr>
+                    <th class="text-left py-2">Producto</th>
+                    <th class="text-right py-2">Cant.</th>
+                    <th class="text-right py-2">Precio</th>
+                    <th class="text-right py-2">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detalle in orden.detalles %}
+                <tr class="border-b border-gray-200">
+                    <td class="py-2">{{ detalle.producto.nombre }}</td>
+                    <td class="text-right py-2">{{ detalle.cantidad }}</td>
+                    <td class="text-right py-2">${{ "%.2f"|format(detalle.precio_unitario) }}</td>
+                    <td class="text-right py-2">${{ "%.2f"|format(detalle.subtotal) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="border-t border-gray-400">
+                <tr>
+                    <td colspan="3" class="text-right font-bold py-2">Total:</td>
+                    <td class="text-right font-bold py-2">${{ "%.2f"|format(orden.total) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="mt-4 text-sm text-gray-700">
+            <p><strong>Método de pago:</strong> 
+                {% for pago in orden.pagos %}
+                    {{ pago.metodo_pago|capitalize }}
+                {% endfor %}
+            </p>
+            {% if orden.pagos[0].metodo_pago == 'efectivo' %}
+                {% set monto_recibido = orden.pagos[0].monto %} {# esto no está guardado, se puede ajustar #}
+                <p><strong>Cambio:</strong> ${{ "%.2f"|format(monto_recibido - orden.total) }}</p>
+            {% endif %}
+            <p class="mt-4 text-center text-xs">¡Gracias por su visita!</p>
+        </div>
+    </div>
+
+    <div class="mt-6 flex justify-between">
+        <button onclick="window.print()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <span class="material-symbols-outlined">print</span> Imprimir</button>
+        <a href="{{ url_for('mesas.lista_mesas') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Volver a Mesas</a>
+    </div>
+</div>
+
+<style media="print">
+    /* Ocultar todo lo que no sea el ticket */
+    body * {
+        visibility: hidden;
+        width: 80mm;   /* o 58mm según tu impresora */
+        margin: 0;
+        padding: 2mm;
+        font-family: monospace;
+        font-size: 10pt;
+        background: white;
+        color: black;
+    }
+
+    @page {
+    size: 80mm 200mm; /* Ancho fijo, altura variable según contenido */
+    margin: 0;
+    }
+    /* Mostrar solo el ticket y sus hijos */
+    #ticket-content, #ticket-content * {
+        visibility: visible;
+    }
+    /* Posicionar el ticket en el centro de la página */
+    #ticket-content {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        margin: 0;
+        padding: 1cm;
+    }
+    /* Ajustes de estilo para impresión */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        border-bottom: 1px solid #ccc;
+        padding: 5px;
+        text-align: left;
+    }
+    .text-right {
+        text-align: right;
+    }
+    /* Ocultar el botón y el enlace de volver */
+    .no-print, button, a {
+        display: none !important;
+    }
+</style>
+{% endblock %}

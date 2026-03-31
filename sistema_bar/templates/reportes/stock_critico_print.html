@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Crítico</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .warning {
+            color: #d9534f;
+            font-weight: bold;
+        }
+        .print-button {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stock Crítico</h1>
+    <p>Ingredientes con stock por debajo del mínimo:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Ingrediente</th>
+                <th class="text-right">Stock Actual</th>
+                <th class="text-right">Stock Mínimo</th>
+                <th class="text-right">Faltante</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ing in ingredientes %}
+            <tr>
+                <td>{{ ing.nombre }}</td>
+                <td class="text-right">{{ ing.stock_actual }} {{ ing.unidad }}</td>
+                <td class="text-right">{{ ing.stock_minimo }} {{ ing.unidad }}</td>
+                <td class="text-right warning">{{ (ing.stock_minimo - ing.stock_actual) }} {{ ing.unidad }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script>
+        window.onload = function() {
+            window.print();
+        };
+    </script>
+</body>
+</html>

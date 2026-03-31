@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sistema de Gestion de Bar/Restaurant</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Work Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Work+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-error": "#ffffff",
+              "inverse-on-surface": "#eff1f0",
+              "inverse-primary": "#94d3c1",
+              "surface-container-high": "#e6e9e8",
+              "primary-fixed-dim": "#94d3c1",
+              "outline": "#707975",
+              "outline-variant": "#bfc9c4",
+              "surface-container": "#eceeed",
+              "surface-container-highest": "#e1e3e2",
+              "tertiary": "#00342d",
+              "on-primary-fixed-variant": "#065043",
+              "on-secondary-fixed-variant": "#6d3a00",
+              "surface-tint": "#29695b",
+              "surface": "#f8faf9",
+              "on-surface": "#191c1c",
+              "on-secondary-fixed": "#2e1500",
+              "secondary-fixed-dim": "#ffb77a",
+              "error-container": "#ffdad6",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-fixed-variant": "#005046",
+              "error": "#ba1a1a",
+              "primary": "#00342b",
+              "on-error-container": "#93000a",
+              "on-tertiary-fixed": "#00201b",
+              "on-background": "#191c1c",
+              "primary-container": "#004d40",
+              "on-surface-variant": "#3f4945",
+              "secondary-container": "#ff8f00",
+              "on-primary-container": "#7ebdac",
+              "tertiary-fixed-dim": "#84d5c5",
+              "on-secondary-container": "#623400",
+              "inverse-surface": "#2e3131",
+              "secondary": "#8f4e00",
+              "on-secondary": "#ffffff",
+              "on-primary": "#ffffff",
+              "tertiary-fixed": "#a0f2e1",
+              "surface-bright": "#f8faf9",
+              "on-tertiary-container": "#6ebfb0",
+              "on-primary-fixed": "#00201a",
+              "surface-dim": "#d8dad9",
+              "tertiary-container": "#004d43",
+              "surface-container-low": "#f2f4f3",
+              "secondary-fixed": "#ffdcc2",
+              "on-tertiary": "#ffffff",
+              "background": "#f8faf9",
+              "surface-variant": "#e1e3e2",
+              "primary-fixed": "#afefdd"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans", "sans-serif"],
+              "body": ["Work Sans", "sans-serif"],
+              "label": ["Work Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background-color: #f8faf9;
+        }
+        h1, h2, h3, .font-headline {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
+
+    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+
+</head>
+<body class="bg-surface text-on-surface antialiased overflow-x-hidden">
+    <!-- SideNavBar (Shared Component) -->
+    <aside
+        class="h-screen w-64 fixed left-0 top-0 z-40 bg-emerald-50 dark:bg-emerald-950 flex flex-col h-full p-4 gap-2 font-plus-jakarta text-sm antialiased">
+        <div class="mb-8 px-4 py-2">
+            <h1 class="font-bold text-emerald-950 dark:text-white text-xl tracking-tighter">THE CULINARY LEDGER</h1>
+            <p class="text-xs text-emerald-800/60 dark:text-emerald-200/60 uppercase tracking-widest mt-1">Punto de venta
+            </p>
+        </div>
+        <nav class="flex-1 space-y-1 overflow-y-auto overflow-x-hidden">
+            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
+                if request.path == '/' 
+                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
+                href="{{ url_for('dashboard') }}">
+                <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                <span>Dashboard</span>
+            </a>
+            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
+                if request.path == '/mesas/' 
+                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
+                href="{{ url_for('mesas.lista_mesas') }}">
+                <span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+                <span>Mesas</span>
+            </a>
+            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
+                if request.path == '/ordenes/' 
+                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
+                href="{{ url_for('ordenes.lista_ordenes') }}">
+                <span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+                <span>Ordenes</span>
+            </a>
+            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
+                if request.path == '/categorias/' 
+                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
+                href="{{ url_for('categorias.lista_categorias') }}">
+                <span class="material-symbols-outlined" data-icon="restaurant_menu">category</span>
+                <span>Categorias</span>
+            </a>
+            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
+                if request.path == '/ingredientes/' 
+                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
+                href="{{ url_for('ingredientes.lista_ingredientes') }}">
+                <span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+                <span>Inventario</span>
+            </a>
+            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
+                if request.path == '/recetas/' 
+                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
+                href="{{ url_for('recetas.lista_recetas') }}">
+                <span class="material-symbols-outlined" data-icon="restaurant_menu">chef_hat</span>
+                <span>Recetas</span>
+            </a>
+            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
+                if request.path == '/productos/' 
+                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
+                href="{{ url_for('productos.lista_productos') }}">
+                <span class="material-symbols-outlined" data-icon="restaurant_menu">restaurant_menu</span>
+                <span>Productos</span>
+            </a>
+            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
+                if request.path == '/compras/' 
+                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
+                href="{{ url_for('compras.lista_compras') }}">
+                <span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+                <span>Compras</span>
+            </a>
+            {% if current_user.is_authenticated and current_user.rol == 'admin' %}
+                <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
+                if request.path == '/usuarios/' 
+                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
+                href="{{ url_for('usuarios.lista_usuarios') }}">
+                    <span class="material-symbols-outlined" data-icon="group">group</span>
+                    <span>Usuarios</span>
+                </a>
+            {% endif %}
+        </nav>
+        <div class="mt-auto pt-4 border-t border-emerald-100 dark:border-emerald-900/30">
+            <a class="w-full bg-primary-container text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 mb-4 active:opacity-80 transition-all font-semibold"
+                href="{{ url_for('mesas.lista_mesas') }}">
+                <span class="material-symbols-outlined" data-icon="add">add</span>
+                Nueva Orden
+            </a>
+            <a class="flex items-center gap-3 text-emerald-800/70 dark:text-emerald-200/60 px-4 py-2 hover:translate-x-1 transition-all duration-300"
+                href="{{ url_for('auth.logout') }}">
+                <span class="material-symbols-outlined" data-icon="logout">logout</span>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+    <!-- TopAppBar (Shared Component) -->
+    <header
+        class="fixed top-0 left-64 right-0 z-50 bg-white/80 dark:bg-emerald-950/80 backdrop-blur-xl border-b border-emerald-900/5 dark:border-emerald-50/5 shadow-sm">
+        <div class="flex justify-between items-center px-8 py-3 w-full h-16">
+            <div class="flex items-end gap-6">
+                <div class="flex items-center gap-3 pl-6 border-l border-emerald-900/10">
+                    <div class="relative">
+                        <button id="reportesDropdownBtn" class="flex items-center gap-3 text-emerald-900 dark:text-emerald-900 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300 w-full text-left">
+                            <span class="material-symbols-outlined" data-icon="bar_chart">bar_chart</span>
+                            <span>Reportes</span>
+                            <span class="ml-auto material-symbols-outlined text-sm">expand_more</span>
+                        </button>
+                        <div id="reportesDropdownMenu" class="absolute left-0 mt-1 w-48 bg-white dark:bg-emerald-900 rounded-lg shadow-lg py-1 z-50 hidden">
+                            <a href="{{ url_for('reportes.ventas_por_mesero_print') }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-100 dark:hover:bg-emerald-800">Ventas por mesero</a>
+                            <a href="{{ url_for('reportes.stock_critico_print') }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-100 dark:hover:bg-emerald-800">Stock crítico</a>
+                            <a href="{{ url_for('reportes.cierre_caja_print') }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-100 dark:hover:bg-emerald-800">Cierre de caja</a>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-emerald-900 leading-tight">{{ current_user.nombre }}</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-full bg-primary-fixed overflow-hidden border-2 border-primary-container/10">
+                        <img alt="Chef Profile" class="w-full h-full object-cover"
+                            data-alt="Close up of a professional chef profile"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvDyXLLAsM5AjROKVxers74VMNYN82UCLVX2joYLUtHOlqhGt4jE36AbXI8qnKLKbcLqaQQD5UDI8zc2LX_lNWXoOpsksY9EeBQrk1H2BIPi0fxnh8zeVJRjn7qB4wX9gqjIkmI66mGdaeo-sNpiV0H3CWTkZrWijU-ZkomTGkS2aVWlEdDiE-BOrBLgguUjYBAHZnI6IgxIGAmM7G7Fa1t1X3B_tSNsKaoUvW9H7CYk1rmgejDDT9yIPrS_mhoRuTfgcbQ-gyhSA" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Main Content Canvas -->
+    <main class="ml-64 pt-16 p-8 min-h-screen">
+        <!-- Welcome Heading -->
+<!-- <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">SGBR</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    {% if current_user.is_authenticated and current_user.rol == 'admin' %}
+                        <li class="nav-item">
+                            <a href="{{ url_for('usuarios.lista_usuarios') }}" class="btn btn-outline-light ms-2"><i class="bi bi-people-fill"></i> Usuarios</a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="btn btn-outline-light ms-2" aria-current="page" href="{{ url_for('dashboard') }}"><i class="bi bi-speedometer2"></i> Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('mesas.lista_mesas') }}" class="btn btn-outline-light ms-2"><i class="bi bi-person-badge-fill"></i> Mesas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-outline-light ms-2" href="{{ url_for('ingredientes.lista_ingredientes') }}"><i class="bi bi-box-seam-fill"></i> Inventario</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-outline-light ms-2" href="{{ url_for('recetas.lista_recetas') }}"><i class="bi bi-journal-text"></i> Recetas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-outline-light ms-2" href="{{ url_for('categorias.lista_categorias') }}"><i class="bi bi-bookmarks-fill"></i> Categorias</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('productos.lista_productos') }}" class="btn btn-outline-light ms-2"><i class="bi bi-fork-knife"></i> Productos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-outline-light ms-2" href="{{ url_for('ordenes.lista_ordenes') }}"><i class="bi bi-clock-fill"></i> Ordenes</a>
+                    </li>
+                </ul>
+                <div class="d-flex" role="search">
+                    {% if current_user.is_authenticated %}
+                        <span class="text-white me-3">Hola, {{ current_user.nombre }}</span>
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light me-2"><i class="bi bi-box-arrow-right"></i> Salir</a>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light me-2">Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav> -->
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+                {% for category, message in messages %}
+                <script>
+                    Swal.fire({
+                        toast: true,
+                        theme: 'dark',
+                        position: 'top-end',
+                        icon: '{{ category if category else 'info' }}',
+                        title: '{{ message }}',
+                        showConfirmButton: false,
+                        showCloseButton: true,
+                        timer: 6000,
+                        timerProgressBar: true
+                    })
+                </script>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <script>
+        const dropdownBtn = document.getElementById('reportesDropdownBtn');
+        const dropdownMenu = document.getElementById('reportesDropdownMenu');
+            if (dropdownBtn && dropdownMenu) {
+                dropdownBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('hidden');
+                });
+                // Cerrar al hacer clic fuera
+                document.addEventListener('click', function(event) {
+                    if (!dropdownBtn.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                        dropdownMenu.classList.add('hidden');
+                    }
+                });
+            }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="font-headline font-bold text-2xl mb-4">Ordenes</h1>
+
+<div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200" id="tablaProductos">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mesa</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha y Hora</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mesero</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for ordenes in ordenes %}
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ ordenes.id }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ ordenes.mesa.numero }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ ordenes.fecha_hora.strftime("%d/%m/%Y %H:%M:%S") }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ ordenes.mesero.nombre}}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ "%.2f"|format(ordenes.total) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    {% if ordenes.estado == 'cancelada' %}
+                        <span class="inline-flex items-center rounded-md bg-red-200 px-2 py-1 text-xs font-medium text-red-900 inset-ring inset-ring-red-600/10">CANCELADA</span>
+                    {% elif ordenes.estado == 'abierta'  %}
+                       <a href="{{ url_for('mesas.ver_orden', mesa_id=ordenes.mesa_id) }}"
+                            class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-3 rounded inline-flex items-center mr-2">
+                            <span class="material-symbols-outlined">table_eye</span> Ver Orden
+                        </a>
+                        <a href="{{ url_for('ordenes.cancelar_orden', orden_id=ordenes.id) }}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded inline-flex items-center mr-2" onclick="return confirm('¿Eliminar esta compra? Se revertirá el stock.')">
+                            <span class="material-symbols-outlined">cancel</span> Cancelar
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('mesas.ticket_orden', orden_id=ordenes.id) }}" class="bg-sky-500 hover:bg-sky-700 text-white font-bold py-1 px-3 rounded inline-flex items-center mr-2">
+                            <span class="material-symbols-outlined">receipt_long</span> Ticket
+                        </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+    if (document.getElementById("tablaProductos") && typeof simpleDatatables.DataTable !== 'undefined') {
+    const dataTable = new simpleDatatables.DataTable("#tablaProductos");
+    }
+</script>
+
+{% endblock %}
