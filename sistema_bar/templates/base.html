@@ -2,14 +2,13 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Sistema de Gestion de Bar/Restaurant</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <!-- Google Fonts: Plus Jakarta Sans & Work Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Work+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
     <!-- Material Symbols -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <script id="tailwind-config">
       tailwind.config = {
@@ -76,6 +75,7 @@
       }
     </script>
     <style>
+        /* Estilos base + responsividad del sidebar (off-canvas mobile) */
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
@@ -89,108 +89,174 @@
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
+
+        /* --- Sidebar responsive: mobile first (oculto) --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px; /* w-72 aprox, mas comodo en movil */
+            height: 100vh;
+            transition: left 0.3s ease-in-out;
+            z-index: 1000;
+            overflow-y: auto;
+            background-color: #f0fdf4; /* emerald-50 */
+            box-shadow: 2px 0 12px rgba(0,0,0,0.1);
+        }
+        /* Modo oscuro (respaldo) */
+        .dark .sidebar {
+            background-color: #022c22; /* emerald-950 */
+        }
+        /* cuando el body tiene la clase 'sidebar-open' se muestra */
+        body.sidebar-open .sidebar {
+            left: 0;
+        }
+        /* Overlay para móvil */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s;
+        }
+        body.sidebar-open .sidebar-overlay {
+            opacity: 1;
+            visibility: visible;
+        }
+        /* Ajuste del contenido principal y header para móvil (sin margen izquierdo fijo) */
+        .main-content, .app-header {
+            transition: margin-left 0.2s ease;
+        }
+        /* Desktop: a partir de lg (1024px) el sidebar siempre visible y el layout cambia */
+        @media (min-width: 1024px) {
+            .sidebar {
+                position: fixed;
+                left: 0 !important;
+                width: 256px; /* w-64 original */
+                transform: none !important;
+                box-shadow: none;
+            }
+            .sidebar-overlay {
+                display: none !important;
+            }
+            .main-content {
+                margin-left: 256px !important;
+            }
+            .app-header {
+                left: 256px !important;
+                width: auto !important;
+                margin-left: 0 !important;
+            }
+            /* deshabilitar scroll lock en desktop */
+            body.sidebar-open {
+                overflow: auto !important;
+            }
+            /* boton hamburguesa oculto en desktop */
+            .mobile-menu-btn {
+                display: none !important;
+            }
+        }
+        /* Para evitar scroll cuando el sidebar movil esta abierto */
+        body.sidebar-open {
+            overflow: hidden;
+        }
+        /* Ajustes adicionales para que el header y main no tengan margen forzado en movil */
+        @media (max-width: 1023px) {
+            .main-content {
+                margin-left: 0 !important;
+            }
+            .app-header {
+                left: 0 !important;
+            }
+        }
     </style>
 
     <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
-
     <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
-
 </head>
 <body class="bg-surface text-on-surface antialiased overflow-x-hidden">
-    <!-- SideNavBar (Shared Component) -->
-    <aside
-        class="h-screen w-64 fixed left-0 top-0 z-40 bg-emerald-50 dark:bg-emerald-950 flex flex-col h-full p-4 gap-2 font-plus-jakarta text-sm antialiased">
-        <div class="mb-8 px-4 py-2">
-            <h1 class="font-bold text-emerald-950 dark:text-white text-xl tracking-tighter">THE CULINARY LEDGER</h1>
-            <p class="text-xs text-emerald-800/60 dark:text-emerald-200/60 uppercase tracking-widest mt-1">Punto de venta
-            </p>
+    <!-- Overlay (solo visible en mobile cuando sidebar abierto) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- SideNavBar (Shared Component) - Versión responsive con clases personalizadas -->
+    <aside class="sidebar flex flex-col h-full p-4 gap-2 font-plus-jakarta text-sm antialiased">
+        <div class="mb-8 px-4 py-2 flex justify-between items-center lg:justify-start">
+            <div>
+                <h1 class="font-bold text-emerald-950 dark:text-white text-xl tracking-tighter">THE CULINARY LEDGER</h1>
+                <p class="text-xs text-emerald-800/60 dark:text-emerald-200/60 uppercase tracking-widest mt-1">Punto de venta</p>
+            </div>
+            <!-- Botón cerrar sidebar (solo visible en móvil) -->
+            <button id="closeSidebarBtn" class="lg:hidden text-emerald-800 dark:text-emerald-200 p-2 rounded-full hover:bg-emerald-200/50 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
         <nav class="flex-1 space-y-1 overflow-y-auto overflow-x-hidden">
-            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
-                if request.path == '/' 
-                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
-                href="{{ url_for('dashboard') }}">
+            <a class="flex items-center gap-3 nav-link" href="{{ url_for('dashboard') }}" data-path="dashboard">
                 <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
                 <span>Dashboard</span>
             </a>
-            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
-                if request.path == '/mesas/' 
-                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
-                href="{{ url_for('mesas.lista_mesas') }}">
+            <a class="flex items-center gap-3 nav-link" href="{{ url_for('mesas.lista_mesas') }}" data-path="mesas">
                 <span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
                 <span>Mesas</span>
             </a>
-            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
-                if request.path == '/ordenes/' 
-                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
-                href="{{ url_for('ordenes.lista_ordenes') }}">
+            <a class="flex items-center gap-3 nav-link" href="{{ url_for('ordenes.lista_ordenes') }}" data-path="ordenes">
                 <span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
                 <span>Ordenes</span>
             </a>
-            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
-                if request.path == '/categorias/' 
-                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
-                href="{{ url_for('categorias.lista_categorias') }}">
+            <a class="flex items-center gap-3 nav-link" href="{{ url_for('categorias.lista_categorias') }}" data-path="categorias">
                 <span class="material-symbols-outlined" data-icon="restaurant_menu">category</span>
                 <span>Categorias</span>
             </a>
-            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
-                if request.path == '/ingredientes/' 
-                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
-                href="{{ url_for('ingredientes.lista_ingredientes') }}">
+            <a class="flex items-center gap-3 nav-link" href="{{ url_for('ingredientes.lista_ingredientes') }}" data-path="ingredientes">
                 <span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
                 <span>Inventario</span>
             </a>
-            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
-                if request.path == '/recetas/' 
-                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
-                href="{{ url_for('recetas.lista_recetas') }}">
+            <a class="flex items-center gap-3 nav-link" href="{{ url_for('recetas.lista_recetas') }}" data-path="recetas">
                 <span class="material-symbols-outlined" data-icon="restaurant_menu">chef_hat</span>
                 <span>Recetas</span>
             </a>
-            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
-                if request.path == '/productos/' 
-                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
-                href="{{ url_for('productos.lista_productos') }}">
+            <a class="flex items-center gap-3 nav-link" href="{{ url_for('productos.lista_productos') }}" data-path="productos">
                 <span class="material-symbols-outlined" data-icon="restaurant_menu">restaurant_menu</span>
                 <span>Productos</span>
             </a>
-            <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
-                if request.path == '/compras/' 
-                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
-                href="{{ url_for('compras.lista_compras') }}">
+            <a class="flex items-center gap-3 nav-link" href="{{ url_for('compras.lista_compras') }}" data-path="compras">
                 <span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
                 <span>Compras</span>
             </a>
             {% if current_user.is_authenticated and current_user.rol == 'admin' %}
-                <a class="flex items-center gap-3 {{ 'bg-white dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 rounded-lg px-4 py-3 shadow-sm hover:translate-x-1 transition-all duration-300' 
-                if request.path == '/usuarios/' 
-                else 'text-emerald-800/70 dark:text-emerald-200/60 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300' }}"
-                href="{{ url_for('usuarios.lista_usuarios') }}">
+                <a class="flex items-center gap-3 nav-link" href="{{ url_for('usuarios.lista_usuarios') }}" data-path="usuarios">
                     <span class="material-symbols-outlined" data-icon="group">group</span>
                     <span>Usuarios</span>
                 </a>
             {% endif %}
         </nav>
         <div class="mt-auto pt-4 border-t border-emerald-100 dark:border-emerald-900/30">
-            <a class="w-full bg-primary-container text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 mb-4 active:opacity-80 transition-all font-semibold"
-                href="{{ url_for('mesas.lista_mesas') }}">
+            <a class="w-full bg-primary-container text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 mb-4 active:opacity-80 transition-all font-semibold" href="{{ url_for('mesas.lista_mesas') }}">
                 <span class="material-symbols-outlined" data-icon="add">add</span>
                 Nueva Orden
             </a>
-            <a class="flex items-center gap-3 text-emerald-800/70 dark:text-emerald-200/60 px-4 py-2 hover:translate-x-1 transition-all duration-300"
-                href="{{ url_for('auth.logout') }}">
+            <a class="flex items-center gap-3 text-emerald-800/70 dark:text-emerald-200/60 px-4 py-2 hover:translate-x-1 transition-all duration-300" href="{{ url_for('auth.logout') }}">
                 <span class="material-symbols-outlined" data-icon="logout">logout</span>
                 <span>Cerrar Sesión</span>
             </a>
         </div>
     </aside>
-    <!-- TopAppBar (Shared Component) -->
-    <header
-        class="fixed top-0 left-64 right-0 z-50 bg-white/80 dark:bg-emerald-950/80 backdrop-blur-xl border-b border-emerald-900/5 dark:border-emerald-50/5 shadow-sm">
-        <div class="flex justify-between items-center px-8 py-3 w-full h-16">
-            <div class="flex items-end gap-6">
-                <div class="flex items-center gap-3 pl-6 border-l border-emerald-900/10">
+
+    <!-- TopAppBar (Shared Component) responsive -->
+    <header class="app-header fixed top-0 right-0 z-50 bg-white/80 dark:bg-emerald-950/80 backdrop-blur-xl border-b border-emerald-900/5 dark:border-emerald-50/5 shadow-sm transition-all duration-200" style="left: 0;">
+        <div class="flex justify-between items-center px-4 sm:px-6 lg:px-8 py-3 w-full h-16">
+            <div class="flex items-center gap-3">
+                <!-- Botón hamburguesa (mobile) -->
+                <button id="menuToggleBtn" class="mobile-menu-btn lg:hidden text-emerald-800 dark:text-emerald-200 p-2 rounded-full hover:bg-emerald-100/50 transition-colors">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <div class="hidden lg:flex items-center gap-3 pl-6 border-l border-emerald-900/10">
                     <div class="relative">
                         <button id="reportesDropdownBtn" class="flex items-center gap-3 text-emerald-900 dark:text-emerald-900 px-4 py-3 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:translate-x-1 transition-all duration-300 w-full text-left">
                             <span class="material-symbols-outlined" data-icon="bar_chart">bar_chart</span>
@@ -203,117 +269,169 @@
                             <a href="{{ url_for('reportes.cierre_caja_print') }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-100 dark:hover:bg-emerald-800">Cierre de caja</a>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-sm font-bold text-emerald-900 leading-tight">{{ current_user.nombre }}</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-primary-fixed overflow-hidden border-2 border-primary-container/10">
-                        <img alt="Chef Profile" class="w-full h-full object-cover"
-                            data-alt="Close up of a professional chef profile"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvDyXLLAsM5AjROKVxers74VMNYN82UCLVX2joYLUtHOlqhGt4jE36AbXI8qnKLKbcLqaQQD5UDI8zc2LX_lNWXoOpsksY9EeBQrk1H2BIPi0fxnh8zeVJRjn7qB4wX9gqjIkmI66mGdaeo-sNpiV0H3CWTkZrWijU-ZkomTGkS2aVWlEdDiE-BOrBLgguUjYBAHZnI6IgxIGAmM7G7Fa1t1X3B_tSNsKaoUvW9H7CYk1rmgejDDT9yIPrS_mhoRuTfgcbQ-gyhSA" />
-                    </div>
                 </div>
             </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold text-emerald-900 leading-tight">{{ current_user.nombre }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-primary-fixed overflow-hidden border-2 border-primary-container/10">
+                    <img alt="Chef Profile" class="w-full h-full object-cover"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvDyXLLAsM5AjROKVxers74VMNYN82UCLVX2joYLUtHOlqhGt4jE36AbXI8qnKLKbcLqaQQD5UDI8zc2LX_lNWXoOpsksY9EeBQrk1H2BIPi0fxnh8zeVJRjn7qB4wX9gqjIkmI66mGdaeo-sNpiV0H3CWTkZrWijU-ZkomTGkS2aVWlEdDiE-BOrBLgguUjYBAHZnI6IgxIGAmM7G7Fa1t1X3B_tSNsKaoUvW9H7CYk1rmgejDDT9yIPrS_mhoRuTfgcbQ-gyhSA" />
+                </div>
+            </div>
+        </div>
+        <!-- Versión móvil: reubicar el menú de reportes dentro de un dropdown compacto? Se mantiene en el mismo sitio pero sin border-left, para mejor UX en móvil se puede mostrar inline pero lo dejamos igual, añadimos un wrapper -->
+        <div class="lg:hidden px-4 pb-2 flex items-center justify-between border-t border-emerald-900/10 mt-1 pt-2">
+            <div class="relative">
+                <button id="reportesMobileBtn" class="flex items-center gap-2 text-sm text-emerald-800 dark:text-emerald-200 font-medium">
+                    <span class="material-symbols-outlined text-base">bar_chart</span>
+                    <span>Reportes</span>
+                    <span class="material-symbols-outlined text-sm">expand_more</span>
+                </button>
+                <div id="reportesMobileMenu" class="absolute left-0 mt-2 w-48 bg-white dark:bg-emerald-900 rounded-lg shadow-lg py-1 z-50 hidden">
+                    <a href="{{ url_for('reportes.ventas_por_mesero_print') }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-100 dark:hover:bg-emerald-800">Ventas por mesero</a>
+                    <a href="{{ url_for('reportes.stock_critico_print') }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-100 dark:hover:bg-emerald-800">Stock crítico</a>
+                    <a href="{{ url_for('reportes.cierre_caja_print') }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-100 dark:hover:bg-emerald-800">Cierre de caja</a>
+                </div>
+            </div>
+            <span class="text-xs text-emerald-700/70 dark:text-emerald-300/70 sm:hidden">{{ current_user.nombre }}</span>
         </div>
     </header>
-    <!-- Main Content Canvas -->
-    <main class="ml-64 pt-16 p-8 min-h-screen">
-        <!-- Welcome Heading -->
-<!-- <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">SGBR</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    {% if current_user.is_authenticated and current_user.rol == 'admin' %}
-                        <li class="nav-item">
-                            <a href="{{ url_for('usuarios.lista_usuarios') }}" class="btn btn-outline-light ms-2"><i class="bi bi-people-fill"></i> Usuarios</a>
-                        </li>
-                    {% endif %}
-                    <li class="nav-item">
-                        <a class="btn btn-outline-light ms-2" aria-current="page" href="{{ url_for('dashboard') }}"><i class="bi bi-speedometer2"></i> Inicio</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ url_for('mesas.lista_mesas') }}" class="btn btn-outline-light ms-2"><i class="bi bi-person-badge-fill"></i> Mesas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-outline-light ms-2" href="{{ url_for('ingredientes.lista_ingredientes') }}"><i class="bi bi-box-seam-fill"></i> Inventario</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-outline-light ms-2" href="{{ url_for('recetas.lista_recetas') }}"><i class="bi bi-journal-text"></i> Recetas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-outline-light ms-2" href="{{ url_for('categorias.lista_categorias') }}"><i class="bi bi-bookmarks-fill"></i> Categorias</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ url_for('productos.lista_productos') }}" class="btn btn-outline-light ms-2"><i class="bi bi-fork-knife"></i> Productos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-outline-light ms-2" href="{{ url_for('ordenes.lista_ordenes') }}"><i class="bi bi-clock-fill"></i> Ordenes</a>
-                    </li>
-                </ul>
-                <div class="d-flex" role="search">
-                    {% if current_user.is_authenticated %}
-                        <span class="text-white me-3">Hola, {{ current_user.nombre }}</span>
-                        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light me-2"><i class="bi bi-box-arrow-right"></i> Salir</a>
-                    {% else %}
-                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light me-2">Login</a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </nav> -->
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Main Content Canvas -->
+    <main class="main-content pt-16 p-4 sm:p-6 lg:p-8 min-h-screen transition-all duration-200">
+        <div class="max-w-7xl mx-auto">
             {% block content %}{% endblock %}
         </div>
     </main>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-                {% for category, message in messages %}
-                <script>
-                    Swal.fire({
-                        toast: true,
-                        theme: 'dark',
-                        position: 'top-end',
-                        icon: '{{ category if category else 'info' }}',
-                        title: '{{ message }}',
-                        showConfirmButton: false,
-                        showCloseButton: true,
-                        timer: 6000,
-                        timerProgressBar: true
-                    })
-                </script>
+            {% for category, message in messages %}
+            <script>
+                Swal.fire({
+                    toast: true,
+                    theme: 'dark',
+                    position: 'top-end',
+                    icon: '{{ category if category else 'info' }}',
+                    title: '{{ message | safe }}',
+                    showConfirmButton: false,
+                    showCloseButton: true,
+                    timer: 6000,
+                    timerProgressBar: true
+                })
+            </script>
             {% endfor %}
         {% endif %}
     {% endwith %}
+
     <script>
-        const dropdownBtn = document.getElementById('reportesDropdownBtn');
-        const dropdownMenu = document.getElementById('reportesDropdownMenu');
+        (function() {
+            // Elementos
+            const menuToggle = document.getElementById('menuToggleBtn');
+            const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+            const overlay = document.getElementById('sidebarOverlay');
+            const body = document.body;
+            
+            // Función para abrir sidebar
+            function openSidebar() {
+                body.classList.add('sidebar-open');
+            }
+            
+            function closeSidebar() {
+                body.classList.remove('sidebar-open');
+            }
+            
+            // Eventos para abrir/cerrar
+            if (menuToggle) {
+                menuToggle.addEventListener('click', openSidebar);
+            }
+            if (closeSidebarBtn) {
+                closeSidebarBtn.addEventListener('click', closeSidebar);
+            }
+            if (overlay) {
+                overlay.addEventListener('click', closeSidebar);
+            }
+            
+            // Cerrar sidebar al hacer clic en un enlace del nav (navegación suave en mobile)
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    // Permitir navegación, pero si estamos en móvil y el sidebar está abierto, cerrarlo después de un pequeño delay
+                    if (window.innerWidth < 1024 && body.classList.contains('sidebar-open')) {
+                        // No prevenimos el click, solo cerramos sidebar
+                        closeSidebar();
+                    }
+                });
+            });
+            
+            // Manejo de dropdowns: reportes escritorio y móvil
+            const dropdownBtn = document.getElementById('reportesDropdownBtn');
+            const dropdownMenu = document.getElementById('reportesDropdownMenu');
             if (dropdownBtn && dropdownMenu) {
                 dropdownBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     dropdownMenu.classList.toggle('hidden');
                 });
-                // Cerrar al hacer clic fuera
                 document.addEventListener('click', function(event) {
                     if (!dropdownBtn.contains(event.target) && !dropdownMenu.contains(event.target)) {
                         dropdownMenu.classList.add('hidden');
                     }
                 });
             }
+            
+            // Dropdown móvil
+            const mobileReportBtn = document.getElementById('reportesMobileBtn');
+            const mobileReportMenu = document.getElementById('reportesMobileMenu');
+            if (mobileReportBtn && mobileReportMenu) {
+                mobileReportBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    mobileReportMenu.classList.toggle('hidden');
+                });
+                document.addEventListener('click', function(event) {
+                    if (!mobileReportBtn.contains(event.target) && !mobileReportMenu.contains(event.target)) {
+                        mobileReportMenu.classList.add('hidden');
+                    }
+                });
+            }
+            
+            // Resaltar enlace activo según la URL (para mantener consistencia visual)
+            function setActiveNavLink() {
+                const currentPath = window.location.pathname;
+                const links = document.querySelectorAll('.sidebar .nav-link');
+                links.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && (currentPath === href || (href !== '/' && currentPath.startsWith(href)))) {
+                        link.classList.add('bg-white', 'dark:bg-emerald-900/50', 'text-emerald-900', 'dark:text-emerald-100', 'rounded-lg', 'px-4', 'py-3', 'shadow-sm', 'hover:translate-x-1');
+                        link.classList.remove('text-emerald-800/70', 'dark:text-emerald-200/60', 'px-4', 'py-3', 'hover:bg-emerald-100/50');
+                    } else {
+                        link.classList.remove('bg-white', 'dark:bg-emerald-900/50', 'text-emerald-900', 'dark:text-emerald-100', 'rounded-lg', 'shadow-sm');
+                        link.classList.add('text-emerald-800/70', 'dark:text-emerald-200/60', 'px-4', 'py-3', 'hover:bg-emerald-100/50', 'dark:hover:bg-emerald-900/20');
+                    }
+                    // Asegurar clases base consistentes
+                    link.classList.add('flex', 'items-center', 'gap-3', 'transition-all', 'duration-300');
+                });
+            }
+            setActiveNavLink();
+            
+            // Opcional: cerrar sidebar al redimensionar a escritorio si estaba abierto
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 1024) {
+                    if (body.classList.contains('sidebar-open')) {
+                        body.classList.remove('sidebar-open');
+                    }
+                }
+            });
+        })();
     </script>
+    
     {% block scripts %}{% endblock %}
 </body>
 </html>
